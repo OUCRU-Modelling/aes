@@ -49,10 +49,17 @@ files_names <- with(combinations,
                            years, "/VNM/vnm_", sexes, "_", ages, "_", years, ".tif"))
 ```
 
+And the files paths:
+
+```{r}
+urls <- paste0(worldpop, files_names)
+destfiles <- paste0(data_folder, files_names)
+```
+
 Downloading the data:
 
 ```{r}
-walk2(paste0(worldpop, files_names), paste0(data_folder, files_names), download.file)
+walk2(urls, destfiles, download.file)
 ```
 
 ## Generating province data
