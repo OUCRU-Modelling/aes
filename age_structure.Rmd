@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(tidyr)
 library(purrr)
+library(terra)
 ```
 
 ## Downloading data from WorldPop
@@ -29,7 +30,7 @@ worldpop <- "https://data.worldpop.org/"
 Local data folder:
 
 ```{r}
-data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/GitHub/aes/"
+data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/GitHub/OUCRU-Modelling/aes/"
 ```
 
 All the combinations of years, ages and gender:
