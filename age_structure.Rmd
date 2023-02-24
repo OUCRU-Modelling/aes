@@ -10,3 +10,48 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Packages
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(purrr)
+```
+
+## Downloading data from WorldPop
+
+WorldPop URL:
+
+```{r}
+worldpop <- "https://data.worldpop.org/"
+```
+
+Local data folder:
+
+```{r}
+data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/GitHub/aes/"
+```
+
+All the combinations of years, ages and gender:
+
+```{r}
+combinations <- expand_grid(years = 2000:2020,
+                            ages  = c(0, 1, seq(5, 80, 5)),
+                            sexes = c("f", "m"))
+```
+
+Creating the files names:
+
+```{r}
+files_names <- with(combinations,
+                    paste0("GIS/AgeSex_structures/Global_2000_2020/",
+                           years, "/VNM/vnm_", sexes, "_", ages, "_", years, ".tif"))
+```
+
+Downloading the data:
+
+```{r}
+walk2(paste0(worldpop, files_names), paste0(data_folder, files_names), download.file)
+```
+
+## Generating province data
