@@ -18,9 +18,61 @@ library(tidyr)
 library(purrr)
 library(terra)
 library(stringr)
+library(raster)
+library(sf)
 ```
 
-## Downloading data from WorldPop
+## Downloading provinces polygons data from GADM
+
+GADM root URL:
+
+```{r}
+gadm <- "https://geodata.ucdavis.edu/gadm/"
+```
+
+Version and format:
+
+```{r}
+vers_form <- "gadm3.6/Rsf/"
+```
+
+File:
+
+```{r}
+file_name <- "gadm36_VNM_1_sf.rds"
+```
+
+Creating the local folder structure if it does not exist:
+
+```{r}
+local_folder <- paste0("~/OneDrive - Oxford University Clinical Research Unit/data/GADM/", vers_form)
+if (!dir.exists(local_folder)) dir.create(local_folder, recursive = TRUE)
+```
+
+Downloading the data if not already available locally:
+
+```{r}
+local_file <- paste0(local_folder, file_name)
+if (!dir.exists(local_file)) download.file(paste0(gadm, vers_form, file_name), local_file)
+```
+
+Loading the polygons data:
+
+```{r}
+provinces <- local_file %>%
+  readRDS() %>% 
+  st_set_crs(4326) # modern name of the WGS 84 projection
+```
+
+Checking the map of the provinces polygons:
+
+```{r}
+provinces %>% 
+  st_geometry() %>% 
+  plot()
+```
+
+## Downloading demographic raster data from WorldPop
 
 WorldPop URL:
 
@@ -79,7 +131,4 @@ walk2(urls, destfiles, download.file)
 a <- rast(destfiles[1])
 ```
 
-```{r}
-"~/OneDrive - Oxford University Clinical Research Unit/GitHub/aes/GIS/AgeSex_structures/Global_2000_2020/2000/VNM/vnm_f_0_2000.tif"
-```
 
