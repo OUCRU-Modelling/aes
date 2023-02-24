@@ -17,6 +17,7 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 library(terra)
+library(stringr)
 ```
 
 ## Downloading data from WorldPop
@@ -30,7 +31,7 @@ worldpop <- "https://data.worldpop.org/"
 Local data folder:
 
 ```{r}
-data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/GitHub/OUCRU-Modelling/aes/"
+data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/GitHub/OUCRU-Modelling/aes/WorldPop/"
 ```
 
 All the combinations of years, ages and gender:
@@ -49,7 +50,17 @@ files_names <- with(combinations,
                            years, "/VNM/vnm_", sexes, "_", ages, "_", years, ".tif"))
 ```
 
-And the files paths:
+Creating the folder structure within the data folder:
+
+```{r}
+files_names %>% 
+  map_chr(str_remove, "/v.*$") %>% 
+  unique() %>% 
+  paste0(data_folder, .) %>% 
+  walk(dir.create, recursive = TRUE)
+```
+
+The remote and local files paths:
 
 ```{r}
 urls <- paste0(worldpop, files_names)
@@ -63,3 +74,12 @@ walk2(urls, destfiles, download.file)
 ```
 
 ## Generating province data
+
+```{r}
+a <- rast(destfiles[1])
+```
+
+```{r}
+"~/OneDrive - Oxford University Clinical Research Unit/GitHub/aes/GIS/AgeSex_structures/Global_2000_2020/2000/VNM/vnm_f_0_2000.tif"
+```
+
