@@ -135,9 +135,51 @@ walk2(urls, destfiles, download.file2)
 
 ## Generating province data
 
+A function that converts the polygon of a given province of `provinces` into a
+`SpatVector` object:
+
 ```{r}
-a <- rast(destfiles[1])
+prov2vect <- function(prov_name) {
+  provinces %>% 
+    filter(VARNAME_1 == prov_name) %>%
+    vect()
+}
 ```
+
+A function that crops and masks a `SpatRaster` object `rst` with a `SpatVector`
+object `pol`:
+
+```{r}
+crop_mask <- function(rst, pol) {
+  rst %>%
+    crop(pol) %>% 
+    mask(pol)
+}
+```
+
+The names of the provinces:
+
+```{r}
+provinces_names <- provinces$VARNAME_1
+```
+
+A list of provinces polygons as `SpatVector`:
+
+```{r}
+prov_vect_list <- map(provinces_names, prov2vect)
+```
+
+
+
+
+```{r}
+x <- rast(destfiles[1])
+```
+
+```{r}
+a <- map(prov_vect_list, crop_mask, rst = x)
+```
+
 
 ```{r}
 hanoi <- provinces %>% 
