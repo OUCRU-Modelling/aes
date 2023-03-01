@@ -21,6 +21,7 @@ library(stringr)
 library(raster)
 library(sf)
 library(parallel)
+library(magrittr)
 ```
 
 ## Downloading provinces polygons data from GADM
@@ -94,8 +95,10 @@ data_folder2 <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM
 All the combinations of years, ages and gender:
 
 ```{r}
+ages <- c(0, 1, seq(5, 80, 5))
+
 combinations <- expand_grid(years = 2000:2020,
-                            ages  = c(0, 1, seq(5, 80, 5)),
+                            ages  = ages,
                             sexes = c("f", "m"))
 ```
 
@@ -212,11 +215,57 @@ age_data <- data_folder2 %>%
 A parallelized version:
 
 ```{r}
+hash <- setNames(c(paste0("[", head(ages, -1), "; ", tail(ages, -1), "["), "80+"), ages)
+
 age_data <- data_folder2 %>%
   dir() %>% 
 #  head(3) %>% 
   mclapply(tif2df, mc.cores = detectCores() - 1) %>% 
-  bind_rows()
+  bind_rows() %>% 
+  mutate(age = hash[age]) %>% 
+  mutate(sex = c(f = "female", m = "male")[sex])
+```
+
+## Testing
+
+Let's see at the change in the population size over the years:
+
+```{r}
+pop_in_a_year <- function(x) {
+  age_data %>% 
+    filter(year == x) %>% 
+    pull(n) %>% 
+    sum()
+}
+
+years <- 2000:2020
+pop_sizes <- map_dbl(years, pop_in_a_year)
+plot(years, pop_sizes, type = "o", xlab = "", ylab = "population size")
+```
+
+Works good! Now, let's see proportion of different age classes:
+
+```{r}
+tmp <- age_data %>% 
+  group_by(year, age) %>% 
+  summarise(n = sum(n)) %>% 
+  mutate(p = n / sum(n)) %>% 
+  ungroup()
+
+plot_age_prop <- function(x) {
+  tmp %>% 
+    filter(age == x) %$% 
+    plot(year, p, type = "o")
+}
+
+age_data %>% 
+  pull(age) %>% 
+  unique() %>% 
+  walk(plot_age_prop)
+```
+
+```{r}
+saveRDS(age_data, "age_data.rds")
 ```
 
 
