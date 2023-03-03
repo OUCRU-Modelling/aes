@@ -10,6 +10,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## Packages
 
 ```{r}
@@ -18,11 +19,19 @@ library(tidyr)
 library(purrr)
 library(terra)
 library(stringr)
-library(raster)
 library(sf)
 library(parallel)
 library(magrittr)
 ```
+
+
+## Local folders
+
+```{r}
+gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
+wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
+```
+
 
 ## Downloading provinces polygons data from GADM
 
@@ -47,7 +56,7 @@ file_name <- "gadm36_VNM_1_sf.rds"
 Creating the local folder structure if it does not exist:
 
 ```{r}
-local_folder <- paste0("~/OneDrive - Oxford University Clinical Research Unit/data/GADM/", vers_form)
+local_folder <- paste0(gadm_data_folder, vers_form)
 if (!dir.exists(local_folder)) dir.create(local_folder, recursive = TRUE)
 ```
 
@@ -55,7 +64,7 @@ Downloading the data if not already available locally:
 
 ```{r}
 local_file <- paste0(local_folder, file_name)
-if (!dir.exists(local_file)) download.file(paste0(gadm, vers_form, file_name), local_file)
+if (!file.exists(local_file)) download.file(paste0(gadm, vers_form, file_name), local_file)
 ```
 
 Loading the polygons data:
@@ -63,7 +72,7 @@ Loading the polygons data:
 ```{r}
 provinces <- local_file %>%
   readRDS() %>% 
-  st_set_crs(4326) # modern name of the WGS 84 projection
+  st_set_crs(4326) # setting the modern code of the WGS 84 projection
 ```
 
 Checking the map of the provinces polygons:
@@ -74,22 +83,13 @@ provinces %>%
   plot()
 ```
 
+
 ## Downloading demographic raster data from WorldPop
 
 WorldPop URL:
 
 ```{r}
 worldpop <- "https://data.worldpop.org/"
-```
-
-Local data folder:
-
-```{r}
-data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/"
-```
-
-```{r}
-data_folder2 <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM 2/"
 ```
 
 All the combinations of years, ages and gender:
@@ -102,7 +102,7 @@ combinations <- expand_grid(years = 2000:2020,
                             sexes = c("f", "m"))
 ```
 
-Creating the files names:
+Creating the long files names:
 
 ```{r}
 files_names <- with(combinations,
@@ -110,36 +110,26 @@ files_names <- with(combinations,
                            years, "/VNM/vnm_", sexes, "_", ages, "_", years, ".tif"))
 ```
 
-Creating the folder structure within the data folder if does not exist:
+The corresponding local files names:
 
 ```{r}
-dir.create2 <- function(path, ...) {
-  if (!dir.exists(path)) dir.create(path, recursive = TRUE, ...)
+local_files_names <- paste0(wpop_data_folder, str_remove(files_names, "^GIS.*VNM"))
+```
+
+Checking for those that do not exist locally yet:
+
+```{r}
+sel <- which(!map_lgl(local_files_names, file.exists))
+```
+
+Downloading the files that are missing:
+
+```{r}
+if (length(sel)) {
+  walk2(paste0(worldpop, files_names[sel]), local_files_names[sel], download.file)
 }
-
-files_names %>% 
-  map_chr(str_remove, "/v.*$") %>% 
-  unique() %>% 
-  paste0(data_folder, .) %>% 
-  walk(dir.create2)
 ```
 
-The remote and local files paths:
-
-```{r}
-urls <- paste0(worldpop, files_names)
-destfiles <- paste0(data_folder, files_names)
-```
-
-Downloading the data:
-
-```{r}
-download.file2 <- function(url, destfile, ...) {
-  if (!file.exists(destfile)) download.file(url, destfile, ...)
-}
-
-walk2(urls, destfiles, download.file2)
-```
 
 ## Generating province data
 
@@ -176,14 +166,14 @@ nb_people <- function(rst, pol) {
 }
 ```
 
-A function that converts a tif file (i.e. number of people for a given year,
+A function that converts a TIFF file (i.e. number of people for a given year,
 age, and sex) into a data frame with number of people per province:
 
 ```{r}
 tif2df <- function(tif_file) {
   tmp <- first(str_split(str_remove(tif_file, ".tif"), "_"))
   tif_file %>%
-    paste0(data_folder2, .) %>% 
+    paste0(wpop_data_folder, "/", .) %>% 
     rast() %>% 
     map_dbl(prov_vect_list, nb_people, rst = .) %>% 
     tibble(year = tmp[4], province = provinces_names, sex = tmp[2], age = tmp[3], n = .)
@@ -202,31 +192,26 @@ A list of provinces polygons as `SpatVector`:
 prov_vect_list <- map(provinces_names, prov2vect)
 ```
 
-Processing all the files to generate the age data frame:
+Processing all the files to generate the age data frame (it takes about 30' on
+11 cores of a 3.2 GHz 6-Core Intel i7):
 
-```{r}
-age_data <- data_folder2 %>%
+```{r eval = FALSE}
+hash <- setNames(c(paste0("[", head(ages, -1), ";", tail(ages, -1), "["), "80+"), ages)
+
+age_data <- wpop_data_folder %>%
   dir() %>% 
-  head(3) %>% 
-  map(tif2df) %>% 
-  bind_rows()
-```
-
-A parallelized version:
-
-```{r}
-hash <- setNames(c(paste0("[", head(ages, -1), "; ", tail(ages, -1), "["), "80+"), ages)
-
-age_data <- data_folder2 %>%
-  dir() %>% 
-#  head(3) %>% 
   mclapply(tif2df, mc.cores = detectCores() - 1) %>% 
   bind_rows() %>% 
-  mutate(age = hash[age]) %>% 
-  mutate(sex = c(f = "female", m = "male")[sex])
+  mutate(age = hash[age],
+         sex = c(f = "female", m = "male")[sex])
 ```
 
-## Testing
+```{r include = FALSE}
+age_data <- readRDS()
+```
+
+
+## Testing the data
 
 Let's see at the change in the population size over the years:
 
@@ -238,12 +223,16 @@ pop_in_a_year <- function(x) {
     sum()
 }
 
+plot2 <- function(...) {
+  plot(..., xlab = "", type = "o", col = 4)
+}
+
 years <- 2000:2020
 pop_sizes <- map_dbl(years, pop_in_a_year)
-plot(years, pop_sizes, type = "o", xlab = "", ylab = "population size")
+plot2(years, pop_sizes, ylab = "population size")
 ```
 
-Works good! Now, let's see proportion of different age classes:
+Looks OK. Now, let's see proportion of different age classes:
 
 ```{r}
 tmp <- age_data %>% 
@@ -255,17 +244,25 @@ tmp <- age_data %>%
 plot_age_prop <- function(x) {
   tmp %>% 
     filter(age == x) %$% 
-    plot(year, p, type = "o")
+    plot2(year, p, ylab = "proportion")
+  mtext(x)
 }
+
+opar <- par(mfrow = c(6, 3))
 
 age_data %>% 
   pull(age) %>% 
   unique() %>% 
   walk(plot_age_prop)
+
+par(opar)
 ```
 
-```{r}
-saveRDS(age_data, "age_data.rds")
+Looks OK too, in the sense that the proportions of the age classes are not
+constant with time. Saving to disk:
+
+```{r eval = FALSE}
+saveRDS(age_data, "~/Desktop/age_data.rds")
 ```
 
 
