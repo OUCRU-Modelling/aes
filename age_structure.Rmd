@@ -27,9 +27,10 @@ knitr::purl("age_structure.Rmd", "age_structure.R")
 Specifying the input and output folders:
 
 ```{r folders}
-gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
-wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
-wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
+root <- "~/OneDrive - Oxford University Clinical Research Unit/data/"
+gadm_data_folder <- paste0(root, "GADM/")
+wpop_data_folder <- paste0(root, "WorldPop/raw/age structure/Vietnam")
+wpop_data_processed <- paste0(root, "WorldPop/processed/age structure/Vietnam/age_data.rds")
 ```
 
 Checking whether the WorldPop processed data already exist locally:

@@ -372,9 +372,10 @@ use:</p>
 <div id="local-folders" class="section level2">
 <h2>Local folders</h2>
 <p>Specifying the input and output folders:</p>
-<pre class="r"><code>gadm_data_folder &lt;- &quot;~/OneDrive - Oxford University Clinical Research Unit/data/GADM/&quot;
-wpop_data_folder &lt;- &quot;~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam&quot;
-wpop_data_processed &lt;- &quot;~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds&quot;</code></pre>
+<pre class="r"><code>root &lt;- &quot;~/OneDrive - Oxford University Clinical Research Unit/data/&quot;
+gadm_data_folder &lt;- paste0(root, &quot;GADM/&quot;)
+wpop_data_folder &lt;- paste0(root, &quot;WorldPop/raw/age structure/Vietnam&quot;)
+wpop_data_processed &lt;- paste0(root, &quot;WorldPop/processed/age structure/Vietnam/age_data.rds&quot;)</code></pre>
 <p>Checking whether the WorldPop processed data already exist
 locally:</p>
 <pre class="r"><code>data_available &lt;- file.exists(wpop_data_processed)</code></pre>
