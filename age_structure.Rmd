@@ -232,7 +232,7 @@ if (data_available) {
 
 ## Testing the data
 
-Let's look at the change in the population size over the years:
+Let's look at the change in the whole country population size over the years:
 
 ```{r}
 pop_in_a_year <- function(x) {
@@ -251,7 +251,8 @@ pop_sizes <- map_dbl(years, pop_in_a_year)
 plot2(years, pop_sizes, ylab = "population size")
 ```
 
-Looks OK. Now, let's see proportion of different age classes:
+Looks OK. Now, let's see proportions of different age classes over the years,
+for the whole country again:
 
 ```{r}
 tmp <- age_data %>% 
@@ -270,7 +271,7 @@ tmp %>%
 ```
 
 Looks OK too, in the sense that the proportions of the age classes are not
-constant with time.
+constant with time, and also that the population is getting older and older.
 
 
 
