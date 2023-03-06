@@ -11,9 +11,22 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+## Introduction
+
+The code below uses raster-based modelled data from WorldPop on age structure to
+generate a data frame of age structure by administrative divisions (here
+provinces). To transform this code into an R script, use:
+
+```{r eval = FALSE}
+knitr::purl("age_structure.Rmd", "age_structure.R")
+```
+
+
 ## Local folders
 
-```{r}
+Specifying the input and output folders:
+
+```{r folders}
 gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
 wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
 wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
@@ -43,7 +56,7 @@ if (length(to_install)) install.packages(to_install)
 
 Loading the packages:
 
-```{r}
+```{r message = FALSE}
 dev_null <- sapply(needed_package, function(libname) library(libname, character.only = TRUE))
 rm(dev_null)
 ```
@@ -227,6 +240,12 @@ if (data_available) {
   
   saveRDS(age_data, wpop_data_processed)
 }
+```
+
+The data look like this:
+
+```{r}
+age_data
 ```
 
 
