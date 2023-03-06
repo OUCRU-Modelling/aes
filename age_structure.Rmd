@@ -13,15 +13,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Packages
 
+Packages needed for the analysis:
+
 ```{r}
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(terra)
-library(stringr)
-library(sf)
-library(parallel)
-library(magrittr)
+needed_package <- c("dplyr", "tidyr", "purrr", "terra", "stringr", "sf", "parallel", "magrittr")
+```
+
+Installing the packages that are not already installed:
+
+```{r}
+to_install <- needed_package[which(!needed_package %in% installed.packages()[, "Package"])]
+if (length(to_install)) install.packages(to_install)
+```
+
+Loading the packages:
+
+```{r}
+dev_null <- sapply(needed_package, function(libname) library(libname, character.only = TRUE))
+rm(dev_null)
 ```
 
 
@@ -30,6 +39,7 @@ library(magrittr)
 ```{r}
 gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
 wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
+wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
 ```
 
 
