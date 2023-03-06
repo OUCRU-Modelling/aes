@@ -11,6 +11,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+## Local folders
+
+```{r}
+gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
+wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
+wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
+```
+
+
 ## Packages
 
 Packages needed for the analysis:
@@ -31,15 +40,6 @@ Loading the packages:
 ```{r}
 dev_null <- sapply(needed_package, function(libname) library(libname, character.only = TRUE))
 rm(dev_null)
-```
-
-
-## Local folders
-
-```{r}
-gadm_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/GADM/"
-wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/raw/age structure/Vietnam"
-wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
 ```
 
 
