@@ -19,6 +19,12 @@ wpop_data_folder <- "~/OneDrive - Oxford University Clinical Research Unit/data/
 wpop_data_processed <- "~/OneDrive - Oxford University Clinical Research Unit/data/WorldPop/processed/age structure/Vietnam/age_data.rds"
 ```
 
+Checking whether the WorldPop processed data already exist locally:
+
+```{r}
+data_available <- file.exists(wpop_data_processed)
+```
+
 
 ## Packages
 
@@ -135,7 +141,7 @@ sel <- which(!map_lgl(local_files_names, file.exists))
 Downloading the files that are missing:
 
 ```{r}
-if (length(sel)) {
+if (length(sel) & !data_available) {
   walk2(paste0(worldpop, files_names[sel]), local_files_names[sel], download.file)
 }
 ```
@@ -205,25 +211,28 @@ prov_vect_list <- map(provinces_names, prov2vect)
 Processing all the files to generate the age data frame (it takes about 30' on
 11 cores of a 3.2 GHz 6-Core Intel i7):
 
-```{r eval = FALSE}
-hash <- setNames(c(paste0("[", head(ages, -1), ";", tail(ages, -1), "["), "80+"), ages)
-
-age_data <- wpop_data_folder %>%
-  dir() %>% 
-  mclapply(tif2df, mc.cores = detectCores() - 1) %>% 
-  bind_rows() %>% 
-  mutate(age = hash[age],
-         sex = c(f = "female", m = "male")[sex])
-```
-
-```{r include = FALSE}
-age_data <- readRDS()
+```{r}
+if (data_available) {
+  age_data <- readRDS(wpop_data_processed)
+} else {
+  hash <- setNames(c(paste0("[", head(ages, -1), ";", tail(ages, -1), "["), "80+"), ages)
+  
+  age_data <- wpop_data_folder %>%
+    dir() %>% 
+    mclapply(tif2df, mc.cores = detectCores() - 1) %>% 
+    bind_rows() %>% 
+    mutate(age_class = hash[age],
+           sex       = c(f = "female", m = "male")[sex],
+           age       = as.integer(age))
+  
+  saveRDS(age_data, wpop_data_processed)
+}
 ```
 
 
 ## Testing the data
 
-Let's see at the change in the population size over the years:
+Let's look at the change in the population size over the years:
 
 ```{r}
 pop_in_a_year <- function(x) {
@@ -248,33 +257,20 @@ Looks OK. Now, let's see proportion of different age classes:
 tmp <- age_data %>% 
   group_by(year, age) %>% 
   summarise(n = sum(n)) %>% 
-  mutate(p = n / sum(n)) %>% 
+  mutate(p = n / sum(n),
+         p = cumsum(p)) %>% 
   ungroup()
 
-plot_age_prop <- function(x) {
-  tmp %>% 
-    filter(age == x) %$% 
-    plot2(year, p, ylab = "proportion")
-  mtext(x)
-}
+with(tmp, plot(year, p, ylim = 0:1, type = "n", xlab = "",
+               ylab = "proportions (from younger to older)"))
 
-opar <- par(mfrow = c(6, 3))
-
-age_data %>% 
-  pull(age) %>% 
-  unique() %>% 
-  walk(plot_age_prop)
-
-par(opar)
+tmp %>% 
+  group_by(age) %>% 
+  group_walk(~ with(.x, lines(year, p, col = 4)))
 ```
 
 Looks OK too, in the sense that the proportions of the age classes are not
-constant with time. Saving to disk:
-
-```{r eval = FALSE}
-saveRDS(age_data, "~/Desktop/age_data.rds")
-```
-
+constant with time.
 
 
 
